@@ -2,6 +2,8 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/OpenBooks/bin
-/OpenBooks/obj
+/*/bin
+/*/obj
 /.vs
+/OpenBooks/Properties/serviceDependencies.local.json.user
+/OpenBooks/OpenBooks.csproj.user

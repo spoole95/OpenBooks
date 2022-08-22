@@ -1,46 +1,41 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.EntityFrameworkCore;
+using OpenBooks.Data;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace OpenBooks.Repository
 {
-    public class BooksRepository : CsvRepository<Book>, IBooksRepository
+    public class BooksRepository : IBooksRepository
     {
-        /// <summary>
-        /// Loads books from data set on https://www.kaggle.com/datasets/sootersaalu/amazon-top-50-bestselling-books-2009-2019
-        /// Contains multiple rows for books where sold for multiple years with differing prices
-        /// </summary>
-        public BooksRepository() : base(@"..\Data\bestsellers with categories.csv")
+        private readonly OpenBooksContext _context;
+
+        public BooksRepository(OpenBooksContext context)
         {
-            counter = 0;
+            _context = context;
         }
 
-        public int Create(Book book)
+        public async Task<int> Create(Book book)
         {
-            throw new System.NotImplementedException();
+            _context.Add(book);
+            await _context.SaveChangesAsync();
+            return book.Id;
         }
 
-        public new IEnumerable<Book> Get()
+        public async Task<IEnumerable<Book>> Get()
         {
-            return base.Get();
+            return await _context.Book.ToListAsync();
         }
 
-        public Book Get(int id)
+        public async Task<Book> Get(int id)
         {
-            var books = Get();
-            return books.Single(x => x.Id == id);
+            return await _context.Book.FirstOrDefaultAsync(m => m.Id == id);
         }
 
-        public void Update(int id, Book book)
+        public async Task Update(Book book)
         {
-            throw new System.NotImplementedException();
-        }
-
-
-        private int counter;
-        protected override Book ParseRow(List<string> csvRow)
-        {
-            counter++;
-            return new Book(counter, csvRow[0], csvRow[1], decimal.Parse(csvRow[4]));
-        }
+            _context.Update(book);
+            await _context.SaveChangesAsync();
+        }        
     }
 }

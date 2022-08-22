@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OpenBooks.Repository;
 using System;
@@ -22,30 +23,55 @@ namespace OpenBooks.Controllers
         }
 
         [HttpPost]
-        public int Create(Book book)
+        public async Task<int> Create(Book book)
         {
-            //TODO - Validator?
-
-            return _repository.Create(book);
+            return await _repository.Create(book);
         }
 
         [HttpGet]
-        public IEnumerable<Book> Get()
+        public async Task<IEnumerable<Book>> Get()
         {
-            return _repository.Get();
+            return await _repository.Get();
         }
 
         [HttpGet]
         [Route("{id}")]
-        public Book GetById(int id)
+        public async Task<Book> GetById(int id)
         {
-            return _repository.Get(id);
+            return await _repository.Get(id);
         }
 
         [HttpPut]
-        public void Update(int id, Book book)
+        public async Task Update(int id, Book book)
         {
-            _repository.Update(id, book);
+            if (id != book.Id)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    await _repository.Update(book);
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!BookExists(book.Id))
+                    {
+                        throw new NullReferenceException("Book not found");
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        private bool BookExists(int id)
+        {
+            return _repository.Get(id) != null;
         }
     }
 }

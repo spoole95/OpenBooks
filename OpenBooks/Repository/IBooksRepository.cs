@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace OpenBooks.Repository
 {
     public interface IBooksRepository
     {
-        int Create(Book book);
-        IEnumerable<Book> Get();
-        Book Get(int id);
-        void Update(int id, Book book);
+        Task<int> Create(Book book);
+        Task<IEnumerable<Book>> Get();
+        Task<Book> Get(int id);
+        Task Update(Book book);
     }
 }

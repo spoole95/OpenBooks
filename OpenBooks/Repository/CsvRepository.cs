@@ -1,37 +1,44 @@
 ﻿using Microsoft.VisualBasic.FileIO;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace OpenBooks.Repository
 {
-    /// <summary>
-    /// Base class of json file based repository
-    /// </summary>
-    public abstract class CsvRepository<T>
+    public static class CsvRepository
     {
-        private readonly string filePath;
-
-
         /// <summary>
-        /// 
+        /// Gets all books from the repository https://www.kaggle.com/datasets/sootersaalu/amazon-top-50-bestselling-books-2009-2019
+        /// As this dataset contains duplicates books irrelivant to our use, create a distinct list with the average price over the years given.
         /// </summary>
-        /// <param name="filePath">Path to the repository file</param>
-        public CsvRepository(string filePath)
+        /// <returns></returns>
+        public static IEnumerable<Book> GetDistinct(string filePath)
         {
-            this.filePath = filePath;
+            var result = Get(filePath);
+
+            var distinctResult = result.GroupBy(x => x.Title).Select(x => new Book
+            {
+                Title = x.First().Title,
+                Author = x.First().Author,
+                Price = x.Average(y => y.Price),
+            }).ToList();
+
+            var counter = 0;
+            foreach (Book book in distinctResult)
+            {
+                counter++;
+                book.Id = counter;
+            }
+
+            return distinctResult;
         }
 
 
         /// <summary>
-        /// Gets all T from the repository
+        /// Gets all books from the repository https://www.kaggle.com/datasets/sootersaalu/amazon-top-50-bestselling-books-2009-2019
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        protected IEnumerable<T> Get()
+        public static IEnumerable<Book> Get(string filePath)
         {
             TextFieldParser fileParser = new TextFieldParser(File.OpenRead(filePath));
             if (fileParser == null || fileParser.EndOfData)
@@ -66,20 +73,23 @@ namespace OpenBooks.Repository
             }
         }
 
-        protected abstract T ParseRow(List<string> csvRow);
-
         private static bool HeaderOrBlank(int rowIndex, List<string> csvRow)
         {
             return rowIndex == 0 || csvRow == null || (csvRow.Count == 1 && string.IsNullOrWhiteSpace(csvRow[0]));
         }
 
-        protected void UpdateList(IEnumerable<T> list)
+
+        private static int idCounter = 0;
+        private static Book ParseRow(List<string> csvRow)
         {
-            File.WriteAllText(filePath, JsonSerializer.Serialize(list, new JsonSerializerOptions
+            idCounter++;
+            return new Book
             {
-                WriteIndented = true, //Write indented otherwise humans stand no chance of reading again.
-                IgnoreNullValues = true, //Null values not needed to be stored
-            }));
+                Id = idCounter,
+                Title = csvRow[0],
+                Author = csvRow[1],
+                Price = decimal.Parse(csvRow[4])
+            };
         }
     }
 }
