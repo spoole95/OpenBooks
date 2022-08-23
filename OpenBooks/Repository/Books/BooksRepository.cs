@@ -1,14 +1,22 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OpenBooks.Data;
+using OpenBooks.Repository.Helper;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
-namespace OpenBooks.Repository
+namespace OpenBooks.Repository.Books
 {
     public class BooksRepository : IBooksRepository
     {
         private readonly OpenBooksContext _context;
+
+        private readonly IDictionary<BookSortType, IOrderBy> SortFunction =
+            new Dictionary<BookSortType, IOrderBy>()
+            {
+                { BookSortType.title, new OrderBy<Book, string>(x => x.Title)},
+                { BookSortType.author, new OrderBy<Book, string>(x => x.Author) },
+                { BookSortType.price, new OrderBy<Book, decimal>(x => x.Price) }
+            };
 
         public BooksRepository(OpenBooksContext context)
         {
@@ -22,9 +30,9 @@ namespace OpenBooks.Repository
             return book.Id;
         }
 
-        public async Task<IEnumerable<Book>> Get()
+        public async Task<IEnumerable<Book>> Get(BookSortType sortType)
         {
-            return await _context.Book.ToListAsync();
+            return await _context.Book.OrderBy(SortFunction[sortType]).ToListAsync();
         }
 
         public async Task<Book> Get(int id)
@@ -36,6 +44,6 @@ namespace OpenBooks.Repository
         {
             _context.Update(book);
             await _context.SaveChangesAsync();
-        }        
+        }
     }
 }

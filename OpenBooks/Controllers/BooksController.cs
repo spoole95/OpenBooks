@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OpenBooks.Repository;
+using OpenBooks.Repository.Books;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace OpenBooks.Controllers
@@ -13,6 +12,7 @@ namespace OpenBooks.Controllers
     [Route("[controller]")]
     public class BooksController : ControllerBase
     {
+
         private readonly ILogger<BooksController> _logger;
         private readonly IBooksRepository _repository;
 
@@ -29,9 +29,11 @@ namespace OpenBooks.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Book>> Get()
+        public async Task<IEnumerable<Book>> Get(string sortBy = "title")
         {
-            return await _repository.Get();
+            var sortType = Enum.Parse<BookSortType>(sortBy.ToLower());
+
+            return await _repository.Get(sortType);
         }
 
         [HttpGet]
